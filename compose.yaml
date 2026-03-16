@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: 'postgres:17-alpine'
+    container_name: loganalyzer-postgres
+    environment:
+      POSTGRES_DB: loganalyzer
+      POSTGRES_USER: loganalyzer
+      POSTGRES_PASSWORD: loganalyzer
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U loganalyzer -d loganalyzer']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - loganalyzer-network
+
+  redis:
+    image: 'redis:7-alpine'
+    container_name: loganalyzer-redis
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - loganalyzer-network
+
+volumes:
+  postgres-data:
+
+networks:
+  loganalyzer-network:
+    driver: bridge
