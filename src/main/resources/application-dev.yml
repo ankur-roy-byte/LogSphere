@@ -18,6 +18,17 @@ spring:
       host: localhost
       port: 6379
 
+loki:
+  base-url: http://localhost:3100
+
+scheduler:
+  analysis:
+    rate: 300000
+  alert:
+    rate: 60000
+  spike:
+    rate: 600000
+
 logging:
   level:
     com.ankur.loganalyzer: DEBUG
