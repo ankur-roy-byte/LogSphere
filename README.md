@@ -302,8 +302,3 @@ The project foundation, core entities, parsing pipeline, concurrent processing e
 **Ankur Roy**
 GitHub: [ankur-roy-byte](https://github.com/ankur-roy-byte)
 
----
-
-## License
-
-This project is intended for learning, portfolio, and professional development purposes.
