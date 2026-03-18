@@ -114,6 +114,7 @@ Log Source / API / File Upload
 |---|---|---|
 | POST | `/api/logs/upload` | Upload log content for parsing |
 | POST | `/api/logs/fetch/loki` | Fetch logs from Grafana Loki |
+| POST | `/api/logs/fetch/kafka` | Fetch logs from a Kafka topic |
 
 ### Search APIs
 | Method | Endpoint | Description |
@@ -262,7 +263,7 @@ curl http://localhost:8080/api/analysis/summary
 
 ## Planned Enhancements
 
-- [ ] Kafka-based log streaming ingestion
+- [x] Kafka-based log streaming ingestion
 - [ ] OpenSearch integration for full-text search
 - [ ] Intelligent pattern clustering
 - [ ] Real-time dashboard support
@@ -291,7 +292,7 @@ The project foundation, core entities, parsing pipeline, concurrent processing e
 - [x] Spike detection
 - [x] Alert rules and evaluation
 - [x] Scheduled background jobs
-- [ ] Kafka ingestion
+- [x] Kafka ingestion
 - [ ] OpenSearch integration
 - [ ] UI dashboard
 
