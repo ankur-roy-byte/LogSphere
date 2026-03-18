@@ -39,7 +39,7 @@ Modern applications generate a huge volume of logs across services, environments
 ### Backend
 | Technology | Purpose |
 |---|---|
-| Java 21 | Language |
+| Java 17+ | Language |
 | Spring Boot 4.x | Application framework |
 | Spring Web | REST APIs |
 | Spring Data JPA | ORM / Database access |
@@ -212,7 +212,7 @@ LogSphere/
 
 ### Prerequisites
 
-- Java 21
+- Java 17 or higher
 - Maven
 - Docker Desktop (for PostgreSQL and Redis)
 
