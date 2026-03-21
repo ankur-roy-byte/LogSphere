@@ -1,6 +1,9 @@
 package com.ankur.loganalyzer.controller;
 
+import com.ankur.loganalyzer.dto.AggregationResponse;
 import com.ankur.loganalyzer.dto.AnalysisSummaryResponse;
+import com.ankur.loganalyzer.dto.AnomalyDetectionResponse;
+import com.ankur.loganalyzer.dto.PatternAnalysisResponse;
 import com.ankur.loganalyzer.dto.SpikeDetectionResponse;
 import com.ankur.loganalyzer.service.LogAnalysisService;
 import lombok.RequiredArgsConstructor;
@@ -43,9 +46,61 @@ public class AnalysisController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/errors/by-level")
+    public ResponseEntity<List<Map<String, Object>>> getErrorsByLevel(
+            @RequestParam(required = false) Instant startTime,
+            @RequestParam(required = false) Instant endTime) {
+
+        List<Object[]> results = logAnalysisService.getCountsByLevel(startTime, endTime);
+        List<Map<String, Object>> response = results.stream()
+                .map(row -> Map.<String, Object>of(
+                        "level", row[0].toString(),
+                        "count", (Long) row[1]))
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/errors/by-service")
+    public ResponseEntity<List<Map<String, Object>>> getErrorsByService(
+            @RequestParam(required = false) Instant startTime,
+            @RequestParam(required = false) Instant endTime) {
+
+        List<Object[]> results = logAnalysisService.getCountsByService(startTime, endTime);
+        List<Map<String, Object>> response = results.stream()
+                .map(row -> Map.<String, Object>of(
+                        "serviceName", row[0] != null ? row[0].toString() : "unknown",
+                        "count", (Long) row[1]))
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/spikes")
     public ResponseEntity<SpikeDetectionResponse> detectSpikes() {
         return ResponseEntity.ok(logAnalysisService.detectSpikes());
+    }
+
+    @GetMapping("/patterns")
+    public ResponseEntity<PatternAnalysisResponse> analyzePatterns(
+            @RequestParam(required = false) Instant startTime,
+            @RequestParam(required = false) Instant endTime,
+            @RequestParam(defaultValue = "20") int limit) {
+        return ResponseEntity.ok(logAnalysisService.analyzePatterns(startTime, endTime, limit));
+    }
+
+    @GetMapping("/anomalies")
+    public ResponseEntity<AnomalyDetectionResponse> detectAnomalies(
+            @RequestParam(required = false) Instant startTime,
+            @RequestParam(required = false) Instant endTime,
+            @RequestParam(defaultValue = "5") int windowSize) {
+        return ResponseEntity.ok(logAnalysisService.detectAnomalies(startTime, endTime, windowSize));
+    }
+
+    @GetMapping("/aggregations")
+    public ResponseEntity<AggregationResponse> getAggregations(
+            @RequestParam(required = false) Instant startTime,
+            @RequestParam(required = false) Instant endTime,
+            @RequestParam(defaultValue = "5") long bucketSizeMinutes) {
+        return ResponseEntity.ok(logAnalysisService.getAggregations(startTime, endTime, bucketSizeMinutes));
     }
 
     @GetMapping("/exceptions")

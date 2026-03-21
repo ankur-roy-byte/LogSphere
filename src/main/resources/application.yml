@@ -35,3 +35,13 @@ info:
     description: Enterprise log ingestion and analysis platform
     version: '@project.version@'
     java-version: '@java.version@'
+
+kafka:
+  enabled: false
+  bootstrap-servers: localhost:9092
+  consumer:
+    group-id: logsphere-consumer-group
+    auto-offset-reset: earliest
+    concurrency: 3
+  topic:
+    logs: logs

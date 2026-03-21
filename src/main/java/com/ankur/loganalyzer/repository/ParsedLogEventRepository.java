@@ -52,4 +52,31 @@ public interface ParsedLogEventRepository extends JpaRepository<ParsedLogEvent, 
             @Param("end") Instant end,
             @Param("minCount") long minCount,
             Pageable pageable);
+
+    @Query("SELECT p.level, COUNT(p) FROM ParsedLogEvent p " +
+            "WHERE p.timestamp BETWEEN :start AND :end " +
+            "GROUP BY p.level ORDER BY COUNT(p) DESC")
+    List<Object[]> countByLevelInWindow(@Param("start") Instant start, @Param("end") Instant end);
+
+    @Query("SELECT p.serviceName, COUNT(p) FROM ParsedLogEvent p " +
+            "WHERE p.timestamp BETWEEN :start AND :end AND p.serviceName IS NOT NULL " +
+            "GROUP BY p.serviceName ORDER BY COUNT(p) DESC")
+    List<Object[]> countByServiceInWindow(@Param("start") Instant start, @Param("end") Instant end);
+
+    @Query("SELECT p.host, COUNT(p) FROM ParsedLogEvent p " +
+            "WHERE p.timestamp BETWEEN :start AND :end AND p.host IS NOT NULL " +
+            "GROUP BY p.host ORDER BY COUNT(p) DESC")
+    List<Object[]> countByHostInWindow(@Param("start") Instant start, @Param("end") Instant end);
+
+    List<ParsedLogEvent> findByTimestampBetween(Instant start, Instant end);
+
+    List<ParsedLogEvent> findByLevelAndTimestampBetween(ParsedLogEvent.LogLevel level, Instant start, Instant end);
+
+    @Query("SELECT p.exceptionType, COUNT(p) FROM ParsedLogEvent p " +
+            "WHERE p.exceptionType = :exceptionType AND p.timestamp BETWEEN :start AND :end " +
+            "GROUP BY p.exceptionType")
+    List<Object[]> countByExceptionTypeInWindow(
+            @Param("exceptionType") String exceptionType,
+            @Param("start") Instant start,
+            @Param("end") Instant end);
 }
