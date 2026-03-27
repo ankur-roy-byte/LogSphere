@@ -192,6 +192,378 @@ In modern distributed systems, applications generate massive volumes of logs acr
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
+---
+
+## High-Level Design (HLD)
+
+### System Overview
+
+LogSphere follows a **layered microservices pattern** with clear separation of concerns:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    CLIENT LAYER                              │
+│         REST API Clients, Dashboards, Mobile Apps            │
+└──────────────────┬───────────────────────────────────────────┘
+                   │
+┌──────────────────▼──────────────────────────────────────────┐
+│                   API LAYER                                  │
+│  LogController | AnalysisController | AlertController       │
+│         (OpenAPI 3.0 / Swagger UI)                          │
+└──────────────────┬───────────────────────────────────────────┘
+                   │
+┌──────────────────▼──────────────────────────────────────────┐
+│                   SERVICE LAYER                              │
+│  LogIngestionService    LogProcessingService                │
+│  LogAnalysisService     AlertService                         │
+│  LogSearchService       LokiClientService                    │
+└──────────────────┬───────────────────────────────────────────┘
+                   │
+         ┌─────────┴─────────┐
+         │                   │
+┌────────▼──────┐   ┌────────▼──────┐
+│ ANALYZER LAYER│   │PARSER LAYER    │
+│               │   │                │
+│ • Aggregation │   │• JsonLogParser │
+│ • Anomaly     │   │• RegexLogParser│
+│ • Pattern     │   │• StackTrace    │
+│ • Error Class │   │  Parser        │
+│ • AlertEngine │   │• ParserFactory │
+└────────┬──────┘   └────────┬──────┘
+         │                   │
+         └─────────┬─────────┘
+                   │
+┌──────────────────▼──────────────────────────────────────────┐
+│              REPOSITORY LAYER (JPA)                          │
+│  RawLogEventRepository    ParsedLogEventRepository           │
+│  AlertRuleRepository      AlertEventRepository               │
+│  AnalysisResultRepository LogSourceRepository                │
+└──────────────────┬───────────────────────────────────────────┘
+                   │
+         ┌─────────┴──────────┐
+         │                    │
+    ┌────▼─────┐         ┌────▼──────┐
+    │PostgreSQL│         │  Redis    │
+    │  (RW)    │         │ (Cache)   │
+    └──────────┘         └───────────┘
+```
+
+### Component Interactions
+
+1. **Request Flow**: Client → API Controller → Service → Repository → Database
+2. **Async Processing**: CompletableFuture for non-blocking batch operations
+3. **Caching Strategy**: Redis with 5-minute TTL for analysis results
+4. **Error Handling**: Global exception handler with standardized error responses
+
+### Key Design Principles
+
+| Principle | Implementation |
+|-----------|----------------|
+| **Separation of Concerns** | Distinct layers (controller → service → repository) |
+| **Concurrency** | 4 bounded thread pools prevent resource exhaustion |
+| **Scalability** | Batch processing in configurable batch sizes |
+| **Resilience** | Async processing with error handling and fallbacks |
+| **Observability** | Structured logging, metrics, health checks |
+
+---
+
+## Low-Level Design (LLD)
+
+### Package Structure
+
+```
+com.ankur.loganalyzer
+├── config/          # Configuration beans
+│   ├── AsyncConfig.java       # Thread pools (4 executors)
+│   ├── RedisConfig.java       # Redis template setup
+│   ├── JpaConfig.java         # JPA/Hibernate config
+│   ├── WebConfig.java         # Web MVC config
+│   ├── OpenApiConfig.java     # Swagger 3.0 setup
+│   ├── LoggingConfig.java     # Logging profiles
+│   └── KafkaConfig.java       # Kafka (disabled)
+│
+├── controller/      # REST endpoints
+│   ├── LogController.java     # POST /api/logs/upload, GET /api/logs/search
+│   ├── AnalysisController.java# GET /api/analysis/*
+│   ├── AlertController.java   # POST /api/alerts/rules
+│   ├── LokiFetchController.java # POST /api/logs/fetch/loki
+│   └── KafkaFetchController.java # POST /api/logs/fetch/kafka
+│
+├── service/         # Business logic
+│   ├── LogIngestionService.java    # Batch ingestion, multiline handling
+│   ├── LogProcessingService.java   # Concurrent parsing pipeline
+│   ├── LogAnalysisService.java     # Summary, aggregation, caching
+│   ├── LogSearchService.java       # Dynamic search with pagination
+│   └── AlertService.java           # Rule evaluation, event generation
+│
+├── parser/          # Log parsing (Strategy pattern)
+│   ├── LogParser.java         # Interface
+│   ├── JsonLogParser.java     # @Component, Order=1
+│   ├── RegexLogParser.java    # @Component, Order=2
+│   ├── StackTraceParser.java  # @Component, Order=3
+│   └── ParserFactory.java     # Strategy selection
+│
+├── analyzer/        # Advanced analytics
+│   ├── AggregationService.java # Group-by, time buckets
+│   ├── AnomalyDetector.java    # Z-score, spike detection
+│   ├── PatternDetector.java    # Message clustering
+│   ├── ErrorClassifier.java    # Severity mapping
+│   └── AlertRuleEvaluator.java # Condition evaluation
+│
+├── repository/      # Data access (JPA)
+│   ├── RawLogEventRepository.java      # Native @Query for batching
+│   ├── ParsedLogEventRepository.java   # Custom with aggregations
+│   ├── AlertRuleRepository.java        # CRUD + search
+│   ├── AlertEventRepository.java       # Event persistence
+│   ├── AnalysisResultRepository.java   # Result caching
+│   └── LogSourceRepository.java        # Source management
+│
+├── entity/          # JPA entities
+│   ├── BaseEntity.java         # @MappedSuperclass, id + timestamps
+│   ├── RawLogEvent.java        # @Entity, @Table with indexes
+│   ├── ParsedLogEvent.java     # @Entity with JSON metadata
+│   ├── AlertRule.java          # @Entity with condition enum
+│   ├── AlertEvent.java         # @Entity for alerts
+│   ├── AnalysisResult.java     # @Entity for cached results
+│   └── LogSource.java          # @Entity for source metadata
+│
+├── dto/             # Request/response objects
+│   ├── LogUploadRequest.java       # Input: content, sourceName
+│   ├── LogUploadResponse.java      # Output: counts, message
+│   ├── ParsedLogResponse.java      # Response: log fields
+│   ├── LogSearchRequest.java       # Search criteria
+│   ├── AnalysisSummaryResponse.java# Summary stats
+│   ├── AggregationResponse.java    # Aggregated results
+│   ├── AnomalyDetectionResponse.java # Anomaly details
+│   ├── AlertRuleRequest.java       # Rule creation
+│   ├── ApiResponse<T>.java         # Generic wrapper
+│   └── ErrorResponse.java          # Error details
+│
+├── exception/       # Error handling
+│   ├── GlobalExceptionHandler.java # @RestControllerAdvice
+│   ├── ResourceNotFoundException.java # Custom exception
+│   └── LogAnalysisException.java   # Analysis error
+│
+├── client/          # External integrations
+│   ├── LokiClientService.java    # Grafana Loki HTTP client
+│   └── KafkaConsumerService.java # Kafka consumer (disabled)
+│
+├── scheduler/       # Background tasks
+│   └── LogAnalysisScheduler.java # @Scheduled analysis runs
+│
+├── util/            # Utilities
+│   ├── PaginationUtils.java     # Safe pagination params
+│   └── StringUtils.java         # Exception/trace ID extraction
+│
+└── Application.java # @SpringBootApplication entry point
+```
+
+### Key Classes & Responsibilities
+
+#### **Entities** (JPA)
+
+| Entity | Key Fields | Indexes | Purpose |
+|--------|-----------|---------|---------|
+| `RawLogEvent` | id, source, rawMessage, timestamp, traceId, ingestionTime | timestamp, source_id | Store unprocessed logs |
+| `ParsedLogEvent` | id, rawEvent, serviceName, level, message, exceptionType, stackTrace, metadata | timestamp, level, serviceName, traceId | Store parsed structured data |
+| `AlertRule` | id, name, conditionType, threshold, serviceName, enabled | serviceName | Define alert conditions |
+| `AlertEvent` | id, rule, message, triggeredAt, resolved, resolvedAt | rule_id, triggeredAt | Persistent alert history |
+| `AnalysisResult` | id, analysisType, resultKey, resultValue, windowStart, windowEnd, generatedAt | windowStart, analysisType | Cache computed results |
+
+#### **Services** (Service Layer)
+
+```
+LogIngestionService
+  ├─ ingestFromUpload(content, sourceName) → IngestionResult
+  ├─ ingestRawLines(lines, source) → IngestionResult
+  ├─ processBatch(lines, source) [async]
+  └─ partition(list, batchSize) [utility]
+
+LogProcessingService
+  ├─ processUnprocessedLogs() [async]
+  ├─ processBatchAsync(logs, batchSize)
+  └─ updateProcessedStatus(ids)
+
+LogAnalysisService
+  ├─ generateSummary(start, end) → AnalysisSummaryResponse
+  ├─ detectAnomalies(start, end, windowSize) → AnomalyDetectionResponse
+  ├─ detectSpikes() → SpikeDetectionResponse
+  ├─ analyzePatterns(start, end, limit) → PatternAnalysisResponse
+  ├─ getAggregations(start, end, bucketSize) → AggregationResponse
+  └─ [caching logic with Redis TTL]
+
+AlertService
+  ├─ createRule(request) → AlertRule
+  ├─ evaluateAllRules() [scheduled]
+  ├─ triggerAlert(rule, context)
+  └─ updateAlertStatus(id, resolved)
+
+LogSearchService
+  ├─ searchLogs(serviceName, level, traceId, ...) → Page<ParsedLogResponse>
+  ├─ getById(id) → ParsedLogResponse
+  └─ [Dynamic JPA Specifications for filters]
+```
+
+#### **Parser Framework** (Strategy Pattern)
+
+```
+LogParser (Interface)
+  ├─ supports(rawLog): boolean
+  └─ parse(rawLog): ParsedLogEventBuilder
+
+JsonLogParser (@Order=1)
+  ├─ Tries JSONObject parsing
+  ├─ Extracts: serviceName, level, message, timestamp
+  └─ Returns ParsedLogEventBuilder
+
+RegexLogParser (@Order=2)
+  ├─ Matches patterns: "[LEVEL]", "serviceName", "timestamp"
+  ├─ Extracts fields via regex groups
+  └─ Returns ParsedLogEventBuilder
+
+StackTraceParser (@Order=3)
+  ├─ Handles multiline exceptions
+  ├─ Extracts: exceptionType, full stackTrace
+  └─ Returns ParsedLogEventBuilder
+
+ParserFactory
+  ├─ Maintains List<LogParser> (auto-wired)
+  ├─ parse(rawLog)
+  └─ Tries each parser in order, fallback to INFO plain text
+```
+
+#### **Analyzers** (Advanced Analytics)
+
+```
+AggregationService
+  ├─ aggregateByService(events): Map<String, Long>
+  ├─ aggregateByLevel(events): Map<LogLevel, Long>
+  ├─ aggregateByExceptionType(events): Map<String, Long>
+  ├─ aggregateByHost(events): Map<String, Long>
+  └─ aggregateByTimeBucket(events, minutesBucket): Map<Instant, Long>
+
+AnomalyDetector
+  ├─ detectAnomaliesWithZScore(timeSeries): List<Anomaly>
+  ├─ detectSpikes(timeSeries, windowSize): List<Anomaly>
+  ├─ detectServiceAnomalies(current, baseline): List<ServiceAnomaly>
+  └─ [Z-score threshold = ±2.576 (99% confidence)]
+
+PatternDetector
+  ├─ findTopPatterns(events, limit): List<PatternOccurrence>
+  ├─ groupByPattern(events): Map<String, List<String>>
+  └─ [Message similarity clustering]
+
+ErrorClassifier
+  ├─ classifyBySeverity(level): SeverityLevel
+  ├─ extractCategory(exceptionType): ErrorCategory
+  └─ [Enum-based classification]
+```
+
+### Thread Pool Configuration
+
+```
+ingestion-*
+├─ Core size: 4
+├─ Max size: 8
+├─ Queue: 500 (BlockingQueue)
+└─ Usage: Batch ingestion, multiline aggregation
+
+parsing-*
+├─ Core size: 8
+├─ Max size: 16
+├─ Queue: 1000
+└─ Usage: Concurrent log parsing
+
+analysis-*
+├─ Core size: 8
+├─ Max size: 16
+├─ Queue: 500
+└─ Usage: Analytics computation, aggregation
+
+persistence-*
+├─ Core size: 2
+├─ Max size: 4
+├─ Queue: 200
+└─ Usage: Database batch writes
+```
+
+### Database Schema Overview
+
+```sql
+-- Raw logs (unprocessed stream)
+CREATE TABLE raw_log_events (
+  id BIGSERIAL PRIMARY KEY,
+  source_id BIGINT REFERENCES log_sources(id),
+  raw_message TEXT NOT NULL,
+  timestamp TIMESTAMP NOT NULL,
+  trace_id VARCHAR,
+  host VARCHAR,
+  ingestion_time TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_raw_log_timestamp ON raw_log_events(timestamp);
+CREATE INDEX idx_raw_log_source ON raw_log_events(source_id);
+
+-- Parsed logs (structured, indexed for search)
+CREATE TABLE parsed_log_events (
+  id BIGSERIAL PRIMARY KEY,
+  raw_event_id BIGINT UNIQUE REFERENCES raw_log_events(id),
+  service_name VARCHAR,
+  level VARCHAR NOT NULL,  -- TRACE, DEBUG, INFO, WARN, ERROR, FATAL
+  message TEXT NOT NULL,
+  exception_type VARCHAR,
+  stack_trace TEXT,
+  timestamp TIMESTAMP NOT NULL,
+  trace_id VARCHAR,
+  host VARCHAR,
+  metadata JSONB,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_parsed_log_timestamp ON parsed_log_events(timestamp);
+CREATE INDEX idx_parsed_log_service ON parsed_log_events(service_name);
+CREATE INDEX idx_parsed_log_level ON parsed_log_events(level);
+CREATE INDEX idx_parsed_log_trace_id ON parsed_log_events(trace_id);
+
+-- Alert rules (condition definitions)
+CREATE TABLE alert_rules (
+  id BIGSERIAL PRIMARY KEY,
+  name VARCHAR NOT NULL UNIQUE,
+  condition_type VARCHAR NOT NULL,
+  threshold INT,
+  service_name VARCHAR,
+  enabled BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP
+);
+
+-- Alert events (triggered alerts)
+CREATE TABLE alert_events (
+  id BIGSERIAL PRIMARY KEY,
+  rule_id BIGINT REFERENCES alert_rules(id),
+  message TEXT NOT NULL,
+  triggered_at TIMESTAMP NOT NULL,
+  resolved BOOLEAN DEFAULT false,
+  resolved_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_alert_rule ON alert_events(rule_id);
+CREATE INDEX idx_alert_triggered ON alert_events(triggered_at);
+```
+
+### Design Patterns Used
+
+| Pattern | Location | Purpose |
+|---------|----------|---------|
+| **Strategy Pattern** | `ParserFactory` + `LogParser` | Multiple parsing strategies with runtime selection |
+| **Builder Pattern** | Entity classes | Complex object construction (Lombok @Builder) |
+| **Dependency Injection** | Across classes | Constructor-based injection for testability |
+| **Repository Pattern** | `*Repository` classes | Data access abstraction |
+| **Service Locator** | `ParserFactory` | Discovers and selects appropriate parser |
+| **Async/Callback** | `CompletableFuture` | Non-blocking concurrent processing |
+| **Template Method** | `LogAnalysisService` | Caching logic repeated pattern |
+
+---
+
 ### Component Responsibilities
 
 | Component | Responsibility |
