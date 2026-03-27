@@ -54,3 +54,16 @@ springdoc:
     operations-sorter: method
     tags-sorter: alpha
     display-request-duration: true
+
+logging:
+  level:
+    root: INFO
+    com.ankur.loganalyzer: INFO
+    org.springframework.web: INFO
+  file:
+    name: logs/logsphere.log
+    max-size: 10MB
+    max-history: 30
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
