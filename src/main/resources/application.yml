@@ -36,6 +36,47 @@ info:
     version: '@project.version@'
     java-version: '@java.version@'
 
+app:
+  kafka:
+    enabled: false
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: logsphere-consumer-group
+      auto-offset-reset: earliest
+      concurrency: 3
+    topic:
+      logs: logs
+  cache:
+    ttl-minutes: 5
+    max-size: 10000
+    redis-host: localhost
+    redis-port: 6379
+  parsing:
+    chunk-size-kb: 500
+    max-concurrent-parsers: 16
+  thread-pool:
+    ingestion:
+      core-size: 4
+      max-size: 8
+      queue-capacity: 500
+    parsing:
+      core-size: 8
+      max-size: 16
+      queue-capacity: 1000
+    analysis:
+      core-size: 8
+      max-size: 16
+      queue-capacity: 500
+    persistence:
+      core-size: 2
+      max-size: 4
+      queue-capacity: 200
+  analytics:
+    z-score-threshold: 3
+    window-size-minutes: 10
+    anomaly-percentile: 0.95
+    enable-pattern-clustering: true
+
 kafka:
   enabled: false
   bootstrap-servers: localhost:9092
