@@ -27,6 +27,7 @@ public class KafkaFetchController {
     private final LogIngestionService logIngestionService;
     private final LogSourceRepository logSourceRepository;
 
+    /*
     @PostMapping("/kafka")
     public ResponseEntity<LogUploadResponse> fetchFromKafka(@Valid @RequestBody KafkaFetchRequest request) {
         List<String> logLines = kafkaConsumerService.fetchFromTopic(
@@ -61,4 +62,5 @@ public class KafkaFetchController {
                 .message("Kafka log fetch and ingestion complete from topic: " + request.topic())
                 .build());
     }
+    */
 }

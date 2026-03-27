@@ -5,14 +5,14 @@ import com.ankur.loganalyzer.repository.LogSourceRepository;
 import com.ankur.loganalyzer.service.LogIngestionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.TopicPartition;
+//import org.apache.kafka.clients.consumer.ConsumerRecord;
+//import org.apache.kafka.clients.consumer.ConsumerRecords;
+//import org.apache.kafka.clients.consumer.KafkaConsumer;
+//import org.apache.kafka.common.TopicPartition;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.support.Acknowledgment;
+//import org.springframework.kafka.annotation.KafkaListener;
+//import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -21,8 +21,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.common.serialization.StringDeserializer;
+//import org.apache.kafka.clients.consumer.ConsumerConfig;
+//import org.apache.kafka.common.serialization.StringDeserializer;
 
 @Service
 @Slf4j
@@ -36,6 +36,7 @@ public class KafkaConsumerService {
     @Value("${kafka.bootstrap-servers:localhost:9092}")
     private String bootstrapServers;
 
+    /*
     @KafkaListener(
             topics = "${kafka.topic.logs:logs}",
             containerFactory = "kafkaListenerContainerFactory"
@@ -66,7 +67,9 @@ public class KafkaConsumerService {
             // Don't acknowledge - will be reprocessed
         }
     }
+    */
 
+    /*
     public List<String> fetchFromTopic(String topic, Integer partition, Long offset, int limit) {
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -126,4 +129,5 @@ public class KafkaConsumerService {
                                 .type(LogSource.SourceType.KAFKA)
                                 .build()));
     }
+    */
 }

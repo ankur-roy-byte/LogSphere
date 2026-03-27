@@ -1,24 +1,24 @@
 package com.ankur.loganalyzer.config;
 
-import org.apache.kafka.clients.admin.NewTopic;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.common.serialization.StringDeserializer;
+//import org.apache.kafka.clients.admin.NewTopic;
+//import org.apache.kafka.clients.consumer.ConsumerConfig;
+//import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.annotation.EnableKafka;
-import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
-import org.springframework.kafka.config.TopicBuilder;
-import org.springframework.kafka.core.ConsumerFactory;
-import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.kafka.listener.ContainerProperties;
+//import org.springframework.kafka.annotation.EnableKafka;
+//import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+//import org.springframework.kafka.config.TopicBuilder;
+//import org.springframework.kafka.core.ConsumerFactory;
+//import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+//import org.springframework.kafka.listener.ContainerProperties;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-@EnableKafka
+//@EnableKafka
 @ConditionalOnProperty(prefix = "kafka", name = "enabled", havingValue = "true", matchIfMissing = false)
 public class KafkaConfig {
 
@@ -37,6 +37,7 @@ public class KafkaConfig {
     @Value("${kafka.topic.logs:logs}")
     private String logsTopic;
 
+    /*
     @Bean
     public ConsumerFactory<String, String> consumerFactory() {
         Map<String, Object> props = new HashMap<>();
@@ -68,4 +69,6 @@ public class KafkaConfig {
                 .replicas(1)
                 .build();
     }
+    */
 }
+
