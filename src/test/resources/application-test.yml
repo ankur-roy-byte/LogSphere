@@ -1,0 +1,82 @@
+spring:
+  application:
+    name: log-analyzer
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+  datasource:
+    url: jdbc:postgresql://localhost:5432/loganalyzer_test
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000
+      jedis:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+  cache:
+    type: redis
+    redis:
+      time-to-live: 300000
+
+logging:
+  level:
+    root: INFO
+    com.ankur.loganalyzer: DEBUG
+  pattern:
+    console: '[%d{yyyy-MM-dd HH:mm:ss}] [%thread] %-5level %logger{36} - %msg%n'
+
+app:
+  kafka:
+    enabled: false
+  cache:
+    ttl:
+      alertRules: 1800000
+      searchResults: 300000
+      logEntries: 600000
+      analysisResults: 900000
+      sessions: 7200000
+      auditLogs: 3600000
+  parsing:
+    batch-size: 100
+    timeout-seconds: 30
+  thread-pool:
+    ingestion:
+      core-size: 2
+      max-size: 4
+      queue-capacity: 100
+    parsing:
+      core-size: 2
+      max-size: 4
+      queue-capacity: 200
+    analysis:
+      core-size: 2
+      max-size: 4
+      queue-capacity: 100
+    persistence:
+      core-size: 1
+      max-size: 2
+      queue-capacity: 50
+  analytics:
+    enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
