@@ -6,7 +6,6 @@ import com.ankur.loganalyzer.metrics.MetricsSummary;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.responses.ApiResponse as SwaggerApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +25,7 @@ public class MetricsController {
     @GetMapping
     @Operation(summary = "Get all application metrics", description = "Retrieve comprehensive metrics for ingestion, parsing, analysis, and API performance")
     @ApiResponses(value = {
-            @SwaggerApiResponse(responseCode = "200", description = "Metrics retrieved successfully")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Metrics retrieved successfully")
     })
     public ResponseEntity<ApiResponse<MetricsSummary>> getAllMetrics() {
         MetricsSummary summary = metricsCollectorService.getSummary();
@@ -36,7 +35,7 @@ public class MetricsController {
     @GetMapping("/ingestion")
     @Operation(summary = "Get ingestion metrics", description = "Retrieve metrics related to log ingestion performance")
     @ApiResponses(value = {
-            @SwaggerApiResponse(responseCode = "200", description = "Ingestion metrics retrieved successfully")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Ingestion metrics retrieved successfully")
     })
     public ResponseEntity<ApiResponse<?>> getIngestionMetrics() {
         MetricsSummary summary = metricsCollectorService.getSummary();
@@ -52,7 +51,7 @@ public class MetricsController {
     @GetMapping("/parsing")
     @Operation(summary = "Get parsing metrics", description = "Retrieve metrics related to log parsing performance")
     @ApiResponses(value = {
-            @SwaggerApiResponse(responseCode = "200", description = "Parsing metrics retrieved successfully")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Parsing metrics retrieved successfully")
     })
     public ResponseEntity<ApiResponse<?>> getParsingMetrics() {
         MetricsSummary summary = metricsCollectorService.getSummary();
@@ -68,7 +67,7 @@ public class MetricsController {
     @GetMapping("/analysis")
     @Operation(summary = "Get analysis metrics", description = "Retrieve metrics related to log analysis performance")
     @ApiResponses(value = {
-            @SwaggerApiResponse(responseCode = "200", description = "Analysis metrics retrieved successfully")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Analysis metrics retrieved successfully")
     })
     public ResponseEntity<ApiResponse<?>> getAnalysisMetrics() {
         MetricsSummary summary = metricsCollectorService.getSummary();
@@ -84,7 +83,7 @@ public class MetricsController {
     @GetMapping("/cache")
     @Operation(summary = "Get cache metrics", description = "Retrieve cache hit rates and performance metrics")
     @ApiResponses(value = {
-            @SwaggerApiResponse(responseCode = "200", description = "Cache metrics retrieved successfully")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Cache metrics retrieved successfully")
     })
     public ResponseEntity<ApiResponse<?>> getCacheMetrics() {
         MetricsSummary summary = metricsCollectorService.getSummary();
@@ -99,7 +98,7 @@ public class MetricsController {
     @GetMapping("/api")
     @Operation(summary = "Get API metrics", description = "Retrieve API request counts, error rates, and response times")
     @ApiResponses(value = {
-            @SwaggerApiResponse(responseCode = "200", description = "API metrics retrieved successfully")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "API metrics retrieved successfully")
     })
     public ResponseEntity<ApiResponse<?>> getApiMetrics() {
         MetricsSummary summary = metricsCollectorService.getSummary();
@@ -114,7 +113,7 @@ public class MetricsController {
     @GetMapping("/alerts")
     @Operation(summary = "Get alert metrics", description = "Retrieve alert triggering and delivery metrics")
     @ApiResponses(value = {
-            @SwaggerApiResponse(responseCode = "200", description = "Alert metrics retrieved successfully")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Alert metrics retrieved successfully")
     })
     public ResponseEntity<ApiResponse<?>> getAlertMetrics() {
         MetricsSummary summary = metricsCollectorService.getSummary();
@@ -128,7 +127,7 @@ public class MetricsController {
     @PostMapping("/reset")
     @Operation(summary = "Reset all metrics", description = "Reset all collected metrics (admin only)")
     @ApiResponses(value = {
-            @SwaggerApiResponse(responseCode = "200", description = "Metrics reset successfully")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Metrics reset successfully")
     })
     public ResponseEntity<ApiResponse<Void>> resetMetrics() {
         metricsCollectorService.reset();
