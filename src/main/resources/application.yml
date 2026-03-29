@@ -77,6 +77,15 @@ app:
     anomaly-percentile: 0.95
     enable-pattern-clustering: true
 
+cache:
+  ttl:
+    alert-rules: 30
+    search-results: 5
+    log-entries: 10
+    analysis-results: 15
+    sessions: 120
+    audit-logs: 60
+
 kafka:
   enabled: false
   bootstrap-servers: localhost:9092
