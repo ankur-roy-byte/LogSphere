@@ -1,57 +1,55 @@
 spring:
   application:
-    name: log-analyzer
+    name: log-analyzer-test
+
   jpa:
     hibernate:
       ddl-auto: create-drop
-    show-sql: false
-    properties:
-      hibernate:
-        format_sql: true
-        jdbc:
-          batch_size: 20
-        order_inserts: true
+    open-in-view: false
+
   datasource:
-    url: jdbc:postgresql://localhost:5432/loganalyzer_test
-    username: postgres
-    password: postgres
-    driver-class-name: org.postgresql.Driver
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+
+  jackson:
+    default-property-inclusion: non_null
+
   data:
     redis:
       host: localhost
       port: 6379
-      timeout: 2000
-      jedis:
-        pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 0
-  cache:
-    type: redis
-    redis:
-      time-to-live: 300000
 
-logging:
-  level:
-    root: INFO
-    com.ankur.loganalyzer: DEBUG
-  pattern:
-    console: '[%d{yyyy-MM-dd HH:mm:ss}] [%thread] %-5level %logger{36} - %msg%n'
+server:
+  port: 0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+cache:
+  ttl:
+    alert-rules: 30
+    search-results: 5
+    log-entries: 10
+    analysis-results: 15
+    sessions: 120
+    audit-logs: 60
 
 app:
-  kafka:
-    enabled: false
   cache:
-    ttl:
-      alertRules: 1800000
-      searchResults: 300000
-      logEntries: 600000
-      analysisResults: 900000
-      sessions: 7200000
-      auditLogs: 3600000
+    ttl-minutes: 5
+    max-size: 1000
   parsing:
-    batch-size: 100
-    timeout-seconds: 30
+    chunk-size-kb: 500
+    max-concurrent-parsers: 4
   thread-pool:
     ingestion:
       core-size: 2
@@ -60,7 +58,7 @@ app:
     parsing:
       core-size: 2
       max-size: 4
-      queue-capacity: 200
+      queue-capacity: 100
     analysis:
       core-size: 2
       max-size: 4
@@ -70,13 +68,12 @@ app:
       max-size: 2
       queue-capacity: 50
   analytics:
-    enabled: false
+    z-score-threshold: 3
+    window-size-minutes: 10
+    anomaly-percentile: 0.95
+    enable-pattern-clustering: false
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus
-  endpoint:
-    health:
-      show-details: always
+logging:
+  level:
+    root: WARN
+    com.ankur.loganalyzer: INFO
