@@ -1,51 +1,40 @@
--- LogSphere Performance Optimization Indexes
--- Version 1.0.0
--- Indexes for query performance on frequently used columns
+-- Indexes for raw_log_events
+CREATE INDEX IF NOT EXISTS idx_raw_logs_source ON raw_log_events(source_name);
+CREATE INDEX IF NOT EXISTS idx_raw_logs_format ON raw_log_events(format);
+CREATE INDEX IF NOT EXISTS idx_raw_logs_created ON raw_log_events(created_at DESC);
 
--- LogEntry Indexes
-CREATE INDEX IF NOT EXISTS idx_log_entry_service_timestamp ON log_entry(service_name, timestamp DESC);
-CREATE INDEX IF NOT EXISTS idx_log_entry_trace_id ON log_entry(trace_id);
-CREATE INDEX IF NOT EXISTS idx_log_entry_level ON log_entry(level);
-CREATE INDEX IF NOT EXISTS idx_log_entry_timestamp ON log_entry(timestamp DESC);
-CREATE INDEX IF NOT EXISTS idx_log_entry_created_at ON log_entry(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_log_entry_service_level ON log_entry(service_name, level);
+-- Indexes for parsed_log_events
+CREATE INDEX IF NOT EXISTS idx_parsed_logs_raw_log_id ON parsed_log_events(raw_log_id);
+CREATE INDEX IF NOT EXISTS idx_parsed_logs_service ON parsed_log_events(service_name);
+CREATE INDEX IF NOT EXISTS idx_parsed_logs_level ON parsed_log_events(log_level);
+CREATE INDEX IF NOT EXISTS idx_parsed_logs_trace_id ON parsed_log_events(trace_id);
+CREATE INDEX IF NOT EXISTS idx_parsed_logs_exception ON parsed_log_events(exception_type);
+CREATE INDEX IF NOT EXISTS idx_parsed_logs_created ON parsed_log_events(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_parsed_logs_service_level ON parsed_log_events(service_name, log_level);
+CREATE INDEX IF NOT EXISTS idx_parsed_logs_service_created ON parsed_log_events(service_name, created_at DESC);
 
--- AlertRule Indexes
-CREATE INDEX IF NOT EXISTS idx_alert_rule_service_name ON alert_rule(service_name);
-CREATE INDEX IF NOT EXISTS idx_alert_rule_enabled ON alert_rule(enabled);
-CREATE INDEX IF NOT EXISTS idx_alert_rule_created_at ON alert_rule(created_at DESC);
+-- Indexes for log_sources
+CREATE INDEX IF NOT EXISTS idx_log_sources_type ON log_sources(type);
+CREATE INDEX IF NOT EXISTS idx_log_sources_active ON log_sources(active);
 
--- AuditLog Indexes
-CREATE INDEX IF NOT EXISTS idx_audit_log_user_id ON audit_log(user_id);
-CREATE INDEX IF NOT EXISTS idx_audit_log_entity ON audit_log(entity_type, entity_id);
-CREATE INDEX IF NOT EXISTS idx_audit_log_timestamp ON audit_log(timestamp DESC);
-CREATE INDEX IF NOT EXISTS idx_audit_log_action ON audit_log(action_type);
-CREATE INDEX IF NOT EXISTS idx_audit_log_endpoint ON audit_log(endpoint);
+-- Indexes for alert_rules
+CREATE INDEX IF NOT EXISTS idx_alert_rules_enabled ON alert_rules(enabled);
+CREATE INDEX IF NOT EXISTS idx_alert_rules_service ON alert_rules(service_name);
+CREATE INDEX IF NOT EXISTS idx_alert_rules_name ON alert_rules(name);
 
--- AnalysisResult Indexes
-CREATE INDEX IF NOT EXISTS idx_analysis_result_service ON analysis_result(service_name, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_analysis_result_type ON analysis_result(analysis_type);
-CREATE INDEX IF NOT EXISTS idx_analysis_result_created_at ON analysis_result(created_at DESC);
+-- Indexes for alert_events
+CREATE INDEX IF NOT EXISTS idx_alert_events_rule_id ON alert_events(alert_rule_id);
+CREATE INDEX IF NOT EXISTS idx_alert_events_triggered ON alert_events(triggered_at DESC);
+CREATE INDEX IF NOT EXISTS idx_alert_events_resolved ON alert_events(resolved);
+CREATE INDEX IF NOT EXISTS idx_alert_events_severity ON alert_events(severity);
 
--- ParsedLog Indexes
-CREATE INDEX IF NOT EXISTS idx_parsed_log_entry_id ON parsed_log(log_entry_id);
+-- Indexes for analysis_results
+CREATE INDEX IF NOT EXISTS idx_analysis_service ON analysis_results(service_name);
+CREATE INDEX IF NOT EXISTS idx_analysis_timestamp ON analysis_results(analysis_timestamp DESC);
 
--- Session Indexes
-CREATE INDEX IF NOT EXISTS idx_session_user_id ON session(user_id);
-CREATE INDEX IF NOT EXISTS idx_session_expires_at ON session(expires_at);
-
--- ApplicationEvent Indexes
-CREATE INDEX IF NOT EXISTS idx_app_event_type ON application_event(event_type);
-CREATE INDEX IF NOT EXISTS idx_app_event_created_at ON application_event(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_app_event_severity ON application_event(severity);
-
--- Constraints
-ALTER TABLE parsed_log 
-    ADD CONSTRAINT fk_parsed_log_entry 
-    FOREIGN KEY (log_entry_id) REFERENCES log_entry(id) ON DELETE CASCADE;
-
--- Unique Constraints
-ALTER TABLE system_config 
-    ADD CONSTRAINT uk_config_key UNIQUE (config_key);
-
-COMMIT;
+-- Indexes for audit_logs
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user ON audit_logs(username);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action_type);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_endpoint ON audit_logs(endpoint);
