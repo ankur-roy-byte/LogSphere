@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,7 +13,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "alert_rules")
+@Table(name = "alert_rules", indexes = {
+        @Index(name = "idx_alert_rule_enabled", columnList = "enabled"),
+        @Index(name = "idx_alert_rule_service", columnList = "serviceName"),
+        @Index(name = "idx_alert_rule_name", columnList = "name")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -43,3 +48,4 @@ public class AlertRule extends BaseEntity {
         REPEATED_MESSAGE_THRESHOLD, LOGS_PER_MINUTE_EXCEEDS
     }
 }
+
