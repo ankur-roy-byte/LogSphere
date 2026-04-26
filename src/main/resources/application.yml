@@ -76,6 +76,11 @@ app:
     window-size-minutes: 10
     anomaly-percentile: 0.95
     enable-pattern-clustering: true
+  retention:
+    enabled: true
+    parsed-log-retention-days: 30
+    raw-log-retention-days: 7
+    analysis-result-retention-days: 90
 
 cache:
   ttl:

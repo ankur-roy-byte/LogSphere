@@ -47,6 +47,11 @@ public class ApplicationProperties {
      */
     private Analytics analytics = new Analytics();
 
+    /**
+     * Log retention configuration
+     */
+    private Retention retention = new Retention();
+
     @Getter
     @Setter
     public static class Kafka {
@@ -126,5 +131,14 @@ public class ApplicationProperties {
         private int windowSizeMinutes = 10;
         private double anomalyPercentile = 0.95;
         private boolean enablePatternClustering = true;
+    }
+
+    @Getter
+    @Setter
+    public static class Retention {
+        private boolean enabled = true;
+        private int parsedLogRetentionDays = 30;
+        private int rawLogRetentionDays = 7;
+        private int analysisResultRetentionDays = 90;
     }
 }
