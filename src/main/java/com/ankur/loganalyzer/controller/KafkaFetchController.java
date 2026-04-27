@@ -1,14 +1,13 @@
 package com.ankur.loganalyzer.controller;
 
-import com.ankur.loganalyzer.client.KafkaConsumerService;
 import com.ankur.loganalyzer.dto.KafkaFetchRequest;
 import com.ankur.loganalyzer.dto.LogUploadResponse;
 import com.ankur.loganalyzer.model.LogSource;
 import com.ankur.loganalyzer.repository.LogSourceRepository;
+import com.ankur.loganalyzer.service.KafkaFetchService;
 import com.ankur.loganalyzer.service.LogIngestionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,36 +19,33 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/logs/fetch")
 @RequiredArgsConstructor
-@ConditionalOnProperty(prefix = "kafka", name = "enabled", havingValue = "true", matchIfMissing = false)
 public class KafkaFetchController {
 
-    private final KafkaConsumerService kafkaConsumerService;
+    private final KafkaFetchService kafkaFetchService;
     private final LogIngestionService logIngestionService;
     private final LogSourceRepository logSourceRepository;
 
-    /*
     @PostMapping("/kafka")
     public ResponseEntity<LogUploadResponse> fetchFromKafka(@Valid @RequestBody KafkaFetchRequest request) {
-        List<String> logLines = kafkaConsumerService.fetchFromTopic(
+        List<String> logLines = kafkaFetchService.fetch(
+                request.bootstrapServers(),
                 request.topic(),
-                request.partition(),
-                request.offset(),
-                request.limit()
-        );
+                request.groupId(),
+                request.limit());
 
         if (logLines.isEmpty()) {
             return ResponseEntity.ok(LogUploadResponse.builder()
                     .totalLines(0)
                     .parsedSuccessfully(0)
                     .parseFailures(0)
-                    .message("No logs found in Kafka topic: " + request.topic())
+                    .message("No logs fetched from Kafka topic")
                     .build());
         }
 
-        LogSource source = logSourceRepository.findByName("kafka-" + request.topic())
+        LogSource source = logSourceRepository.findByName("kafka")
                 .orElseGet(() -> logSourceRepository.save(
                         LogSource.builder()
-                                .name("kafka-" + request.topic())
+                                .name("kafka")
                                 .type(LogSource.SourceType.KAFKA)
                                 .build()));
 
@@ -59,8 +55,7 @@ public class KafkaFetchController {
                 .totalLines(result.totalLines())
                 .parsedSuccessfully(result.parsedSuccessfully())
                 .parseFailures(result.parseFailures())
-                .message("Kafka log fetch and ingestion complete from topic: " + request.topic())
+                .message("Kafka log fetch and ingestion complete")
                 .build());
     }
-    */
 }

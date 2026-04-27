@@ -196,6 +196,13 @@ In modern distributed systems, applications generate massive volumes of logs acr
 
 ## High-Level Design (HLD)
 
+### Ingestion APIs
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/logs/upload` | Upload log content for parsing |
+| POST | `/api/logs/fetch/loki` | Fetch logs from Grafana Loki |
+| POST | `/api/logs/fetch/kafka` | Fetch logs from a Kafka topic |
+
 ### System Overview
 
 LogSphere follows a **layered microservices pattern** with clear separation of concerns:
