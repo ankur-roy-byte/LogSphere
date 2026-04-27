@@ -81,6 +81,13 @@ app:
     parsed-log-retention-days: 30
     raw-log-retention-days: 7
     analysis-result-retention-days: 90
+  notification:
+    email-enabled: false
+    email-from: alerts@logsphere.io
+    email-to: []
+    email-subject-prefix: "[LogSphere Alert]"
+    slack-enabled: false
+    slack-webhook-url: ""
 
 cache:
   ttl:

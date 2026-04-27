@@ -5,7 +5,9 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -51,6 +53,11 @@ public class ApplicationProperties {
      * Log retention configuration
      */
     private Retention retention = new Retention();
+
+    /**
+     * Alert notification configuration
+     */
+    private Notification notification = new Notification();
 
     @Getter
     @Setter
@@ -140,5 +147,16 @@ public class ApplicationProperties {
         private int parsedLogRetentionDays = 30;
         private int rawLogRetentionDays = 7;
         private int analysisResultRetentionDays = 90;
+    }
+
+    @Getter
+    @Setter
+    public static class Notification {
+        private boolean emailEnabled = false;
+        private String emailFrom = "alerts@logsphere.io";
+        private List<String> emailTo = new ArrayList<>();
+        private String emailSubjectPrefix = "[LogSphere Alert]";
+        private boolean slackEnabled = false;
+        private String slackWebhookUrl = "";
     }
 }

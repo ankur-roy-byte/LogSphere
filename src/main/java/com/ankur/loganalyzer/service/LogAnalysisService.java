@@ -1,5 +1,7 @@
 package com.ankur.loganalyzer.service;
 
+import com.ankur.loganalyzer.annotation.MetricCategory;
+import com.ankur.loganalyzer.annotation.Tracked;
 import com.ankur.loganalyzer.analyzer.AggregationService;
 import com.ankur.loganalyzer.analyzer.AnomalyDetector;
 import com.ankur.loganalyzer.analyzer.PatternDetector;
@@ -45,6 +47,7 @@ public class LogAnalysisService {
     private static final String CACHE_PREFIX = "logsphere:analysis:";
     private static final Duration CACHE_TTL = Duration.ofMinutes(5);
 
+    @Tracked(category = MetricCategory.ANALYSIS, operation = "summary")
     public AnalysisSummaryResponse generateSummary(Instant windowStart, Instant windowEnd) {
         if (windowStart == null) windowStart = Instant.now().minus(1, ChronoUnit.HOURS);
         if (windowEnd == null) windowEnd = Instant.now();
@@ -194,6 +197,7 @@ public class LogAnalysisService {
                 .build();
     }
 
+    @Tracked(category = MetricCategory.ANALYSIS, operation = "anomalies")
     public AnomalyDetectionResponse detectAnomalies(Instant start, Instant end, int windowSize) {
         if (start == null) start = Instant.now().minus(24, ChronoUnit.HOURS);
         if (end == null) end = Instant.now();

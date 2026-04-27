@@ -1,5 +1,7 @@
 package com.ankur.loganalyzer.service;
 
+import com.ankur.loganalyzer.annotation.MetricCategory;
+import com.ankur.loganalyzer.annotation.Tracked;
 import com.ankur.loganalyzer.dto.AlertEventResponse;
 import com.ankur.loganalyzer.dto.AlertRuleRequest;
 import com.ankur.loganalyzer.dto.SpikeDetectionResponse;
@@ -29,6 +31,7 @@ public class AlertService {
     private final AlertRuleRepository alertRuleRepository;
     private final AlertEventRepository alertEventRepository;
     private final ParsedLogEventRepository parsedLogEventRepository;
+    private final AlertNotificationService alertNotificationService;
     @Lazy
     private final LogAnalysisService logAnalysisService;
 
@@ -59,6 +62,7 @@ public class AlertService {
                 PageRequest.of(page, size)).map(this::toResponse);
     }
 
+    @Tracked(category = MetricCategory.ALERT, operation = "evaluate")
     public void evaluateRules() {
         List<AlertRule> enabledRules = alertRuleRepository.findByEnabledTrue();
         Instant windowEnd = Instant.now();
@@ -181,6 +185,7 @@ public class AlertService {
                 .build();
         alertEventRepository.save(event);
         log.warn("ALERT triggered: {} - {}", rule.getName(), message);
+        alertNotificationService.notifyAlert(event);
     }
 
     private AlertEventResponse toResponse(AlertEvent event) {
