@@ -1,0 +1,79 @@
+spring:
+  application:
+    name: log-analyzer-test
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+
+  jackson:
+    default-property-inclusion: non_null
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+server:
+  port: 0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+cache:
+  ttl:
+    alert-rules: 30
+    search-results: 5
+    log-entries: 10
+    analysis-results: 15
+    sessions: 120
+    audit-logs: 60
+
+app:
+  cache:
+    ttl-minutes: 5
+    max-size: 1000
+  parsing:
+    chunk-size-kb: 500
+    max-concurrent-parsers: 4
+  thread-pool:
+    ingestion:
+      core-size: 2
+      max-size: 4
+      queue-capacity: 100
+    parsing:
+      core-size: 2
+      max-size: 4
+      queue-capacity: 100
+    analysis:
+      core-size: 2
+      max-size: 4
+      queue-capacity: 100
+    persistence:
+      core-size: 1
+      max-size: 2
+      queue-capacity: 50
+  analytics:
+    z-score-threshold: 3
+    window-size-minutes: 10
+    anomaly-percentile: 0.95
+    enable-pattern-clustering: false
+
+logging:
+  level:
+    root: WARN
+    com.ankur.loganalyzer: INFO

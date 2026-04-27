@@ -1,5 +1,7 @@
 package com.ankur.loganalyzer.service;
 
+import com.ankur.loganalyzer.annotation.MetricCategory;
+import com.ankur.loganalyzer.annotation.Tracked;
 import com.ankur.loganalyzer.model.LogSource;
 import com.ankur.loganalyzer.model.ParsedLogEvent;
 import com.ankur.loganalyzer.model.RawLogEvent;
@@ -34,6 +36,7 @@ public class LogIngestionService {
 
     public record IngestionResult(int totalLines, int parsedSuccessfully, int parseFailures) {}
 
+    @Tracked(category = MetricCategory.INGESTION, operation = "upload")
     public IngestionResult ingestFromUpload(String content, String sourceName) {
         LogSource source = logSourceRepository.findByName(sourceName != null ? sourceName : "file-upload")
                 .orElseGet(() -> logSourceRepository.save(
