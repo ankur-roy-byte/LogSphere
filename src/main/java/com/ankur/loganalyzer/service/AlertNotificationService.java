@@ -28,6 +28,9 @@ public class AlertNotificationService {
     @Nullable
     private JavaMailSender mailSender;
 
+    @Nullable
+    private AlertWebSocketService alertWebSocketService;
+
     public AlertNotificationService(ApplicationProperties properties, RestTemplate restTemplate) {
         this.properties = properties;
         this.restTemplate = restTemplate;
@@ -36,6 +39,11 @@ public class AlertNotificationService {
     @Autowired(required = false)
     public void setMailSender(JavaMailSender mailSender) {
         this.mailSender = mailSender;
+    }
+
+    @Autowired(required = false)
+    public void setAlertWebSocketService(AlertWebSocketService alertWebSocketService) {
+        this.alertWebSocketService = alertWebSocketService;
     }
 
     @Async("ingestionExecutor")
@@ -47,6 +55,9 @@ public class AlertNotificationService {
         }
         if (config.isSlackEnabled()) {
             sendSlackWebhook(event, config);
+        }
+        if (alertWebSocketService != null) {
+            alertWebSocketService.broadcastAlert(event);
         }
     }
 
