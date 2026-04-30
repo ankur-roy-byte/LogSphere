@@ -86,6 +86,11 @@ app:
     email-subject-prefix: "[LogSphere Alert]"
     slack-enabled: false
     slack-webhook-url: ""
+  security:
+    bootstrap-admin:
+      enabled: true
+      username: ${LOGSPHERE_ADMIN_USERNAME:admin}
+      password: ${LOGSPHERE_ADMIN_PASSWORD:change-me}
 
 cache:
   ttl:
