@@ -2,6 +2,7 @@ package com.ankur.loganalyzer.controller;
 
 import com.ankur.loganalyzer.config.TestDataFactory;
 import com.ankur.loganalyzer.dto.AlertRuleRequest;
+import com.ankur.loganalyzer.model.AlertEvent;
 import com.ankur.loganalyzer.model.AlertRule;
 import com.ankur.loganalyzer.repository.AlertEventRepository;
 import com.ankur.loganalyzer.repository.AlertRuleRepository;
@@ -15,8 +16,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Instant;
+
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -110,5 +114,21 @@ class AlertControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(0)))
                 .andExpect(jsonPath("$.number", is(0)));
+    }
+
+    @Test
+    void resolveAlertEvent() throws Exception {
+        AlertRule rule = alertRuleRepository.save(TestDataFactory.createAlertRule("High Error Rate", "api-service", 10));
+        AlertEvent event = alertEventRepository.save(AlertEvent.builder()
+                .rule(rule)
+                .message("Error count 20 exceeds threshold 10")
+                .triggeredAt(Instant.now())
+                .build());
+
+        mockMvc.perform(post("/api/alerts/{id}/resolve", event.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(event.getId().intValue())))
+                .andExpect(jsonPath("$.resolved", is(true)))
+                .andExpect(jsonPath("$.resolvedAt", notNullValue()));
     }
 }

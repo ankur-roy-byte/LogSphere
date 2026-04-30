@@ -75,6 +75,17 @@ public class AlertController {
         return ResponseEntity.ok(alertService.getAlertEvents(page, size));
     }
 
+    @PostMapping("/{id}/resolve")
+    @Operation(summary = "Resolve alert event",
+            description = "Mark an active alert event as resolved so it leaves the unresolved queue")
+    @ApiResponse(responseCode = "200", description = "Alert event resolved successfully",
+            content = @Content(schema = @Schema(implementation = AlertEventResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Alert event not found")
+    public ResponseEntity<AlertEventResponse> resolveAlertEvent(
+            @Parameter(description = "Alert event ID") @PathVariable Long id) {
+        return ResponseEntity.ok(alertService.resolveAlertEvent(id));
+    }
+
     @PostMapping("/test")
     @Operation(summary = "Test alert evaluation",
             description = "Manually trigger alert rule evaluation for testing purposes")

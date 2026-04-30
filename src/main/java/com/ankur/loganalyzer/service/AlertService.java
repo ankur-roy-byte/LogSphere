@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -60,6 +61,19 @@ public class AlertService {
     public Page<AlertEventResponse> getAlertEvents(int page, int size) {
         return alertEventRepository.findByResolvedFalseOrderByTriggeredAtDesc(
                 PageRequest.of(page, size)).map(this::toResponse);
+    }
+
+    @Transactional
+    public AlertEventResponse resolveAlertEvent(Long id) {
+        AlertEvent event = alertEventRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("AlertEvent", id));
+        if (!event.isResolved()) {
+            event.setResolved(true);
+            event.setResolvedAt(Instant.now());
+            event = alertEventRepository.save(event);
+            log.info("Resolved alert event {}", id);
+        }
+        return toResponse(event);
     }
 
     @Tracked(category = MetricCategory.ALERT, operation = "evaluate")
