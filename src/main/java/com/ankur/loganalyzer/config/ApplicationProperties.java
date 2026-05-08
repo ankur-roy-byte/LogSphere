@@ -59,6 +59,23 @@ public class ApplicationProperties {
      */
     private Notification notification = new Notification();
 
+    /**
+     * Security bootstrap configuration
+     */
+    private Security security = new Security();
+
+    private OpenSearch opensearch = new OpenSearch();
+
+    @Getter
+    @Setter
+    public static class OpenSearch {
+        private boolean enabled = false;
+        private String host = "localhost";
+        private int port = 9200;
+        private String scheme = "http";
+        private String indexPrefix = "logsphere";
+    }
+
     @Getter
     @Setter
     public static class Kafka {
@@ -158,5 +175,19 @@ public class ApplicationProperties {
         private String emailSubjectPrefix = "[LogSphere Alert]";
         private boolean slackEnabled = false;
         private String slackWebhookUrl = "";
+    }
+
+    @Getter
+    @Setter
+    public static class Security {
+        private BootstrapAdmin bootstrapAdmin = new BootstrapAdmin();
+
+        @Getter
+        @Setter
+        public static class BootstrapAdmin {
+            private boolean enabled = true;
+            private String username = "admin";
+            private String password = "change-me";
+        }
     }
 }

@@ -31,7 +31,7 @@ public class KafkaFetchController {
                 request.bootstrapServers(),
                 request.topic(),
                 request.groupId(),
-                request.limit());
+                request.resolvedLimit());
 
         if (logLines.isEmpty()) {
             return ResponseEntity.ok(LogUploadResponse.builder()

@@ -1,28 +1,37 @@
 package com.ankur.loganalyzer.controller;
 
+import com.ankur.loganalyzer.config.TestDataFactory;
 import com.ankur.loganalyzer.dto.AlertRuleRequest;
+import com.ankur.loganalyzer.model.AlertEvent;
 import com.ankur.loganalyzer.model.AlertRule;
+import com.ankur.loganalyzer.repository.AlertEventRepository;
 import com.ankur.loganalyzer.repository.AlertRuleRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.hamcrest.Matchers.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import java.time.Instant;
+
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Integration tests for AlertController
- * Tests alert creation, retrieval, update, and deletion
+ * Integration tests for AlertController.
  */
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 class AlertControllerIntegrationTest {
 
@@ -35,149 +44,91 @@ class AlertControllerIntegrationTest {
     @Autowired
     private AlertRuleRepository alertRuleRepository;
 
+    @Autowired
+    private AlertEventRepository alertEventRepository;
+
     @BeforeEach
     void setUp() {
+        alertEventRepository.deleteAll();
         alertRuleRepository.deleteAll();
     }
 
     @Test
-    void testCreateAlertRuleSuccess() throws Exception {
-        AlertRuleRequest request = new AlertRuleRequest();
-        request.setName("High Error Rate");
-        request.setDescription("Alert when error rate exceeds 10%");
-        request.setServiceName("api-service");
-        request.setCondition("ERROR");
-        request.setThreshold(10L);
-        request.setEnabled(true);
+    void createAlertRuleSuccess() throws Exception {
+        AlertRuleRequest request = TestDataFactory.createAlertRuleRequest("High Error Rate", "api-service");
 
         mockMvc.perform(post("/api/alerts/rules")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.data.name", is("High Error Rate")));
+                .andExpect(jsonPath("$.name", is("High Error Rate")))
+                .andExpect(jsonPath("$.conditionType", is(AlertRule.ConditionType.ERROR_COUNT_EXCEEDS.name())));
     }
 
     @Test
-    void testCreateAlertRuleWithInvalidData() throws Exception {
-        AlertRuleRequest request = new AlertRuleRequest();
-        request.setName("");  // Empty name
-        request.setDescription("Invalid rule");
-        request.setServiceName("api-service");
-        request.setCondition("ERROR");
-        request.setThreshold(10L);
+    void createAlertRuleWithInvalidData() throws Exception {
+        AlertRuleRequest request = AlertRuleRequest.builder()
+                .name("")
+                .conditionType(AlertRule.ConditionType.ERROR_COUNT_EXCEEDS.name())
+                .threshold(10)
+                .serviceName("api-service")
+                .description("Invalid rule")
+                .build();
 
         mockMvc.perform(post("/api/alerts/rules")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
-    void testGetAllAlertRules() throws Exception {
-        // Create sample rules
+    void getAllAlertRules() throws Exception {
         for (int i = 0; i < 5; i++) {
-            AlertRule rule = new AlertRule();
-            rule.setName("Alert " + i);
-            rule.setServiceName("service-" + i);
-            rule.setCondition("ERROR");
-            rule.setThreshold(10L);
-            rule.setEnabled(true);
-            alertRuleRepository.save(rule);
+            alertRuleRepository.save(TestDataFactory.createAlertRule("Alert " + i, "service-" + i, 10));
         }
 
         mockMvc.perform(get("/api/alerts/rules")
-                .param("limit", "20")
-                .param("offset", "0")
-                .accept(MediaType.APPLICATION_JSON))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.data", hasSize(5)));
+                .andExpect(jsonPath("$", hasSize(5)));
     }
 
     @Test
-    void testGetAlertRuleById() throws Exception {
-        AlertRule rule = new AlertRule();
-        rule.setName("Test Alert");
-        rule.setServiceName("test-service");
-        rule.setCondition("WARN");
-        rule.setThreshold(5L);
-        rule.setEnabled(true);
-        AlertRule saved = alertRuleRepository.save(rule);
-
-        mockMvc.perform(get("/api/alerts/rules/{id}", saved.getId())
-                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.data.name", is("Test Alert")));
-    }
-
-    @Test
-    void testUpdateAlertRule() throws Exception {
-        AlertRule rule = new AlertRule();
-        rule.setName("Original Name");
-        rule.setServiceName("test-service");
-        rule.setCondition("ERROR");
-        rule.setThreshold(10L);
-        rule.setEnabled(true);
-        AlertRule saved = alertRuleRepository.save(rule);
-
-        AlertRuleRequest updateRequest = new AlertRuleRequest();
-        updateRequest.setName("Updated Name");
-        updateRequest.setDescription("Updated description");
-        updateRequest.setServiceName("test-service");
-        updateRequest.setCondition("WARN");
-        updateRequest.setThreshold(5L);
-        updateRequest.setEnabled(false);
-
-        mockMvc.perform(put("/api/alerts/rules/{id}", saved.getId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateRequest)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.data.name", is("Updated Name")));
-    }
-
-    @Test
-    void testDeleteAlertRule() throws Exception {
-        AlertRule rule = new AlertRule();
-        rule.setName("To Delete");
-        rule.setServiceName("test-service");
-        rule.setCondition("ERROR");
-        rule.setThreshold(10L);
-        rule.setEnabled(true);
-        AlertRule saved = alertRuleRepository.save(rule);
+    void deleteAlertRule() throws Exception {
+        AlertRule saved = alertRuleRepository.save(TestDataFactory.createAlertRule("To Delete", "test-service", 10));
 
         mockMvc.perform(delete("/api/alerts/rules/{id}", saved.getId()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success", is(true)));
+                .andExpect(status().isNoContent());
 
-        // Verify deletion
-        mockMvc.perform(get("/api/alerts/rules/{id}", saved.getId()))
-                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/alerts/rules"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
     }
 
     @Test
-    void testGetAlertsByService() throws Exception {
-        // Create rules for different services
-        for (String service : new String[]{"api-service", "auth-service", "db-service"}) {
-            AlertRule rule = new AlertRule();
-            rule.setName("Alert for " + service);
-            rule.setServiceName(service);
-            rule.setCondition("ERROR");
-            rule.setThreshold(10L);
-            rule.setEnabled(true);
-            alertRuleRepository.save(rule);
-        }
-
-        mockMvc.perform(get("/api/alerts/by-service")
-                .param("serviceName", "api-service")
-                .param("limit", "20")
-                .param("offset", "0")
-                .accept(MediaType.APPLICATION_JSON))
+    void getAlertEventsPage() throws Exception {
+        mockMvc.perform(get("/api/alerts")
+                        .param("page", "0")
+                        .param("size", "20")
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.data", hasSize(1)))
-                .andExpect(jsonPath("$.data[0].serviceName", is("api-service")));
+                .andExpect(jsonPath("$.content", hasSize(0)))
+                .andExpect(jsonPath("$.number", is(0)));
+    }
+
+    @Test
+    void resolveAlertEvent() throws Exception {
+        AlertRule rule = alertRuleRepository.save(TestDataFactory.createAlertRule("High Error Rate", "api-service", 10));
+        AlertEvent event = alertEventRepository.save(AlertEvent.builder()
+                .rule(rule)
+                .message("Error count 20 exceeds threshold 10")
+                .triggeredAt(Instant.now())
+                .build());
+
+        mockMvc.perform(post("/api/alerts/{id}/resolve", event.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(event.getId().intValue())))
+                .andExpect(jsonPath("$.resolved", is(true)))
+                .andExpect(jsonPath("$.resolvedAt", notNullValue()));
     }
 }

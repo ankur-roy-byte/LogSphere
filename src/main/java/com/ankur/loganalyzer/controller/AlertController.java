@@ -75,6 +75,17 @@ public class AlertController {
         return ResponseEntity.ok(alertService.getAlertEvents(page, size));
     }
 
+    @PostMapping("/{id}/resolve")
+    @Operation(summary = "Resolve alert event",
+            description = "Mark an active alert event as resolved so it leaves the unresolved queue")
+    @ApiResponse(responseCode = "200", description = "Alert event resolved successfully",
+            content = @Content(schema = @Schema(implementation = AlertEventResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Alert event not found")
+    public ResponseEntity<AlertEventResponse> resolveAlertEvent(
+            @Parameter(description = "Alert event ID") @PathVariable Long id) {
+        return ResponseEntity.ok(alertService.resolveAlertEvent(id));
+    }
+
     @PostMapping("/test")
     @Operation(summary = "Test alert evaluation",
             description = "Manually trigger alert rule evaluation for testing purposes")
@@ -82,5 +93,19 @@ public class AlertController {
     public ResponseEntity<Map<String, String>> testAlertEvaluation() {
         alertService.evaluateRules();
         return ResponseEntity.ok(Map.of("status", "Alert evaluation completed"));
+    }
+
+    @PostMapping("/rules/bulk-enable")
+    @Operation(summary = "Bulk enable alert rules", description = "Enable multiple alert rules in one call")
+    public ResponseEntity<Map<String, Object>> bulkEnable(@Valid @RequestBody com.ankur.loganalyzer.dto.BulkRuleRequest request) {
+        int count = alertService.bulkSetEnabled(request.ids(), true);
+        return ResponseEntity.ok(Map.of("updated", count, "enabled", true));
+    }
+
+    @PostMapping("/rules/bulk-disable")
+    @Operation(summary = "Bulk disable alert rules", description = "Disable multiple alert rules in one call")
+    public ResponseEntity<Map<String, Object>> bulkDisable(@Valid @RequestBody com.ankur.loganalyzer.dto.BulkRuleRequest request) {
+        int count = alertService.bulkSetEnabled(request.ids(), false);
+        return ResponseEntity.ok(Map.of("updated", count, "enabled", false));
     }
 }

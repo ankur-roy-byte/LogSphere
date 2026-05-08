@@ -23,7 +23,7 @@ public class AlertWebSocketService {
                     "message", event.getMessage(),
                     "triggeredAt", event.getTriggeredAt().toString()
             );
-            messagingTemplate.convertAndSend("/topic/alerts", payload);
+            messagingTemplate.convertAndSend("/topic/alerts", (Object) payload);
             log.debug("Alert broadcast via WebSocket: {}", event.getRule().getName());
         } catch (Exception e) {
             log.warn("WebSocket broadcast failed for alert '{}'", event.getRule().getName(), e);

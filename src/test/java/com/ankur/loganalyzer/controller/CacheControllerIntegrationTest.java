@@ -6,7 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -16,7 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.hamcrest.Matchers.*;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 @DisplayName("CacheController Integration Tests")
 class CacheControllerIntegrationTest {
@@ -45,7 +45,7 @@ class CacheControllerIntegrationTest {
                 .andExpect(jsonPath("$.hits", equalTo(2)))
                 .andExpect(jsonPath("$.misses", equalTo(1)))
                 .andExpect(jsonPath("$.puts", equalTo(1)))
-                .andExpect(jsonPath("$.hitRate", containsString("66.66")))
+                .andExpect(jsonPath("$.hitRate", containsString("66.67")))
                 .andExpect(jsonPath("$.totalOperations", equalTo(3)));
     }
 

@@ -1,0 +1,13 @@
+package com.ankur.loganalyzer.repository;
+
+import com.ankur.loganalyzer.model.SavedSearch;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface SavedSearchRepository extends JpaRepository<SavedSearch, Long> {
+
+    List<SavedSearch> findAllByOrderByUpdatedAtDesc();
+}
