@@ -184,6 +184,14 @@ public class AlertService {
         }
     }
 
+    @Transactional
+    public int bulkSetEnabled(List<Long> ids, boolean enabled) {
+        List<AlertRule> rules = alertRuleRepository.findAllById(ids);
+        rules.forEach(r -> r.setEnabled(enabled));
+        alertRuleRepository.saveAll(rules);
+        return rules.size();
+    }
+
     private void triggerAlert(AlertRule rule, String message) {
         // Check if there's already an unresolved alert for this rule
         List<AlertEvent> existing = alertEventRepository.findByRuleIdAndResolvedFalse(rule.getId());

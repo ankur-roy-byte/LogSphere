@@ -94,4 +94,18 @@ public class AlertController {
         alertService.evaluateRules();
         return ResponseEntity.ok(Map.of("status", "Alert evaluation completed"));
     }
+
+    @PostMapping("/rules/bulk-enable")
+    @Operation(summary = "Bulk enable alert rules", description = "Enable multiple alert rules in one call")
+    public ResponseEntity<Map<String, Object>> bulkEnable(@Valid @RequestBody com.ankur.loganalyzer.dto.BulkRuleRequest request) {
+        int count = alertService.bulkSetEnabled(request.ids(), true);
+        return ResponseEntity.ok(Map.of("updated", count, "enabled", true));
+    }
+
+    @PostMapping("/rules/bulk-disable")
+    @Operation(summary = "Bulk disable alert rules", description = "Disable multiple alert rules in one call")
+    public ResponseEntity<Map<String, Object>> bulkDisable(@Valid @RequestBody com.ankur.loganalyzer.dto.BulkRuleRequest request) {
+        int count = alertService.bulkSetEnabled(request.ids(), false);
+        return ResponseEntity.ok(Map.of("updated", count, "enabled", false));
+    }
 }
