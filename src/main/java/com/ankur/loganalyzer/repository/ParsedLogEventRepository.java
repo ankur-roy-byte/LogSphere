@@ -86,4 +86,9 @@ public interface ParsedLogEventRepository extends JpaRepository<ParsedLogEvent, 
             @Param("exceptionType") String exceptionType,
             @Param("start") Instant start,
             @Param("end") Instant end);
+
+    @Query("SELECT DISTINCT p.serviceName FROM ParsedLogEvent p " +
+            "WHERE p.serviceName IS NOT NULL AND LOWER(p.serviceName) LIKE LOWER(CONCAT(:prefix, '%')) " +
+            "ORDER BY p.serviceName")
+    List<String> findDistinctServiceNamesByPrefix(@Param("prefix") String prefix, Pageable pageable);
 }
