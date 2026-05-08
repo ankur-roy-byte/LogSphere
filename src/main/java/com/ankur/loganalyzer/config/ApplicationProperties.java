@@ -64,6 +64,18 @@ public class ApplicationProperties {
      */
     private Security security = new Security();
 
+    private OpenSearch opensearch = new OpenSearch();
+
+    @Getter
+    @Setter
+    public static class OpenSearch {
+        private boolean enabled = false;
+        private String host = "localhost";
+        private int port = 9200;
+        private String scheme = "http";
+        private String indexPrefix = "logsphere";
+    }
+
     @Getter
     @Setter
     public static class Kafka {

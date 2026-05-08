@@ -79,6 +79,12 @@ app:
     parsed-log-retention-days: 30
     raw-log-retention-days: 7
     analysis-result-retention-days: 90
+  opensearch:
+    enabled: false
+    host: localhost
+    port: 9200
+    scheme: http
+    index-prefix: logsphere
   notification:
     email-enabled: false
     email-from: alerts@logsphere.io
